@@ -1,0 +1,43 @@
+{
+    "application": {
+        "name": "Healthcare AI Data Platform",
+        "page_title": "Healthcare AI Data Platform",
+        "page_icon": "🏥"
+    },
+
+    "sources": {
+        "FHIR": {
+            "raw_table": "HDMP_BRONZE.FHIR.RAW_FHIR",
+            "target_schema": "HDMP_SILVER.FHIR"
+        },
+        "JSON": {
+            "raw_table": "HDMP_BRONZE.JSON.RAW_JSON",
+            "target_schema": "HDMP_SILVER.JSON"
+        },
+        "XML": {
+            "raw_table": "HDMP_BRONZE.XML.RAW_XML",
+            "target_schema": "HDMP_SILVER.XML"
+        }
+    },
+
+    "control_tables": {
+        "source_target_mapping": "HDMP_BRONZE.CONTROL.SOURCE_TARGET_MAPPING",
+        "flatten_query_registry": "HDMP_BRONZE.CONTROL.FLATTEN_QUERY_REGISTRY",
+        "flatten_error_log": "HDMP_BRONZE.CONTROL.FLATTEN_ERROR_LOG"
+    },
+
+    "ai": {
+        "model": "claude-sonnet-5",
+        "max_repair_attempts": 1
+    },
+
+    "dashboard": {
+        "recent_errors_limit": 10,
+        "recent_registry_limit": 10
+    },
+
+    "mapping": {
+        "source_database": "HDMP_SILVER",
+        "target_database": "HDMP_GOLD"
+    }
+}
