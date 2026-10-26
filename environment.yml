@@ -1,0 +1,23 @@
+name: app_environment
+channels:
+  - snowflake
+dependencies:
+  - beautifulsoup4=
+  - jinja2=
+  - lxml=
+  - markdown=
+  - openpyxl=
+  - pandas=
+  - pillow=
+  - pygithub=2.8.1
+  - python=3.10.*
+  - python-dateutil=
+  - python-docx=
+  - pyyaml=
+  - requests=
+  - snowflake=1.12.1
+  - snowflake-ml-python=
+  - snowflake-snowpark-python=
+  - streamlit=*
+  - streamlit-mermaid=
+  - xlsxwriter=3.2.9
