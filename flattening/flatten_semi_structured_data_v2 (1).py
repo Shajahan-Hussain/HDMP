@@ -727,26 +727,22 @@ def get_target_tables_for_structure(
 # ============================================================
 
 def get_target_columns(session, target_table):
-    """
-    Read the actual columns from the target table.
-    """
+    """Return column names and Snowflake types from DESCRIBE TABLE."""
+    rows = session.sql(f"DESCRIBE TABLE {target_table}").collect()
+    return [f"{row.as_dict()['name']} {row.as_dict()['type']}" for row in rows]
 
-    rows = session.sql(
-        f"DESCRIBE TABLE {target_table}"
-    ).collect()
 
-    columns = []
-
-    for row in rows:
-
-        try:
-            column_name = row["name"]
-        except Exception:
-            column_name = row["NAME"]
-
-        columns.append(column_name)
-
-    return columns
+TARGET_TYPE_RULES = """
+TARGET DATA TYPE RULES (MANDATORY):
+- Match every SELECT expression to its target column's actual Snowflake type.
+- For VARIANT columns, preserve JSON arrays/objects as VARIANT paths, e.g.
+  addr.VALUE:line AS ADDRESS_LINES. Do not use ARRAY_TO_STRING.
+- For ARRAY columns, preserve arrays; use AS_ARRAY(path) when needed.
+- For VARCHAR columns, cast scalar values to STRING.
+- For DATE/NUMBER/TIMESTAMP columns, use appropriate TRY_TO_* conversions.
+- Use an explicit INSERT target column list, with SELECT expressions in exactly
+  the same order. Do not insert a VARCHAR expression into VARIANT/ARRAY.
+"""
 
 
 # ============================================================
@@ -1530,6 +1526,7 @@ def execute_target_query(
 
         current_sql = sql_text
         repair_attempt = 0
+        repair_pending = False
 
         while True:
 
@@ -1554,6 +1551,13 @@ def execute_target_query(
                 session.sql(
                     executable_sql
                 ).collect()
+
+                if repair_pending:
+                    update_registry_sql(
+                        session, source_type, target_table,
+                        structure_hash, current_sql
+                    )
+                    print("[CORTEX REPAIR] Successful SQL cached.")
 
                 print(
                     f"[EXECUTE] SUCCESS: "
@@ -1644,23 +1648,17 @@ def execute_target_query(
                             f"{reason}"
                         )
 
-                    update_registry_sql(
-                        session,
-                        source_type,
-                        target_table,
-                        structure_hash,
-                        repaired_sql
-                    )
-
+                    # Cache the repair only after successful execution.
                     current_sql = repaired_sql
+                    repair_pending = True
 
                     print(
                         "[CORTEX REPAIR] "
-                        "Corrected SQL cached."
+                        "Corrected SQL ready for retry."
                     )
 
                     emit_progress(
-                        f"Repaired SQL cached: {target_table}",
+                        f"Repaired SQL ready for retry: {target_table}",
                         "REPAIR_SUCCESS", source_type, structure_hash,
                         target_table, "SUCCESS"
                     )

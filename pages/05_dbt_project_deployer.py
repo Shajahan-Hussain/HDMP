@@ -2,6 +2,9 @@ import streamlit as st
 from datetime import datetime
 import pandas as pd
 from snowflake.snowpark.context import get_active_session
+from style_utils import render_header
+
+render_header()
 
 session = get_active_session()
 

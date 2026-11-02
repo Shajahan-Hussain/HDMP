@@ -3,6 +3,9 @@ from snowflake.snowpark.context import get_active_session
 
 from utils.config_loader import load_config
 from services.flatten_service import run_source
+from style_utils import render_header
+
+render_header()
 
 
 st.set_page_config(
